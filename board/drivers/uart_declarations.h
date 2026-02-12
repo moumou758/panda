@@ -1,11 +1,9 @@
 #pragma once
 
+// IRQs: USART2, USART3, UART5
+
 // ***************************** Definitions *****************************
-#ifdef STM32H7
 #define FIFO_SIZE_INT 0x400U
-#else
-#define FIFO_SIZE_INT 0x200U
-#endif
 
 typedef struct uart_ring {
   volatile uint16_t w_ptr_tx;
@@ -35,9 +33,7 @@ void putch(const char a);
 void print(const char *a);
 void puthx(uint32_t i, uint8_t len);
 void puth(unsigned int i);
-#if defined(DEBUG_SPI) || defined(BOOTSTUB) || defined(DEBUG)
-static void puth4(unsigned int i);
+#if defined(ENABLE_SPI) || defined(BOOTSTUB) || defined(DEBUG)
+void puth4(unsigned int i);
 #endif
-#if defined(DEBUG_SPI) || defined(DEBUG_USB) || defined(DEBUG_COMMS)
-static void hexdump(const void *a, int l);
-#endif
+void hexdump(const void *a, int l);

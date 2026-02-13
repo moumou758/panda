@@ -3,7 +3,7 @@ import os
 import time
 import subprocess
 
-from panda import Panda, PandaDFU
+from panda_tici import Panda, PandaDFU
 
 board_path = os.path.dirname(os.path.realpath(__file__))
 

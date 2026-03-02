@@ -5,9 +5,9 @@ import contextlib
 import random
 from termcolor import cprint
 
-from panda import PandaJungle
+from panda_tici import PandaJungle
 
-# This script is intended to be used in conjunction with the echo.py test script from panda.
+# This script is intended to be used in conjunction with the echo.py test script from panda_tici.
 # It sends messages on bus 0, 1, 2 and checks for a reversed response to be sent back.
 
 #################################################################

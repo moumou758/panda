@@ -4,7 +4,7 @@ import time
 from collections import defaultdict
 import binascii
 
-from panda_tici import PandaJungle
+from panda import PandaJungle
 
 # fake
 def sec_since_boot():

@@ -1,9 +1,5 @@
 // from the linker script
-#ifdef STM32H7
-  #define APP_START_ADDRESS 0x8020000U
-#elif defined(STM32F4)
-  #define APP_START_ADDRESS 0x8004000U
-#endif
+#define APP_START_ADDRESS 0x8020000U
 
 // flasher state variables
 uint32_t *prog_ptr = NULL;
@@ -87,7 +83,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
     case 0xd6:
       COMPILE_TIME_ASSERT(sizeof(gitversion) <= USBPACKET_MAX_SIZE);
       memcpy(resp, gitversion, sizeof(gitversion));
-      resp_len = sizeof(gitversion);
+      resp_len = sizeof(gitversion) - 1U;
       break;
     // **** 0xd8: reset ST
     case 0xd8:
@@ -134,15 +130,12 @@ void soft_flasher_start(void) {
   gpio_usb_init();
   led_init();
 
-  // enable USB
+  // enable comms
   usb_init();
-
-#ifdef ENABLE_SPI
   if (current_board->has_spi) {
     gpio_spi_init();
     spi_init();
   }
-#endif
 
   // green LED on for flashing
   led_set(LED_GREEN, 1);

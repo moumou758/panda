@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from panda_tici import PandaJungle
+from panda import PandaJungle
 
 if __name__ == "__main__":
   for p in PandaJungle.list():

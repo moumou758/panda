@@ -11,7 +11,6 @@ can_health_t can_health[PANDA_CAN_CNT] = {{0}, {0}, {0}};
 bool ignition_can = false;
 uint32_t ignition_can_cnt = 0U;
 
-int pending_can_live = 0;
 bool can_silent = true;
 bool can_loopback = false;
 
@@ -29,7 +28,7 @@ bool can_loopback = false;
 __attribute__((section(".axisram"))) can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
 __attribute__((section(".itcmram"))) can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
 __attribute__((section(".itcmram"))) can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
-#else
+#else  // kept for PC
 can_buffer(rx_q, CAN_RX_BUFFER_SIZE)
 can_buffer(tx1_q, CAN_TX_BUFFER_SIZE)
 can_buffer(tx2_q, CAN_TX_BUFFER_SIZE)
@@ -133,15 +132,11 @@ bus_config_t bus_config[PANDA_CAN_CNT] = {
   { .bus_lookup = 0U, .can_num_lookup = 0U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
   { .bus_lookup = 1U, .can_num_lookup = 1U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
   { .bus_lookup = 2U, .can_num_lookup = 2U, .forwarding_bus = -1, .can_speed = 5000U, .can_data_speed = 20000U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
-  // { .bus_lookup = 0xFFU, .can_num_lookup = 0xFFU, .forwarding_bus = -1, .can_speed = 333U, .can_data_speed = 333U, .canfd_auto = false, .canfd_enabled = false, .brs_enabled = false, .canfd_non_iso = false },
 };
 
 void can_init_all(void) {
   for (uint8_t i=0U; i < PANDA_CAN_CNT; i++) {
-    if (!current_board->has_canfd) {
-      bus_config[i].can_data_speed = 0U;
-      bus_config[i].canfd_enabled = false;
-    }
+    bus_config[i].canfd_enabled = false;
     can_clear(can_queues[i]);
     (void)can_init(i);
   }

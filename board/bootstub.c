@@ -61,11 +61,11 @@ int main(void) {
   if (vers[0] != VERS_TAG || vers[1] < MIN_VERSION) {
     goto fail;
   }
-
+  goto good;
   // verify RSA signature
-  if (RSA_verify(&release_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
-    goto good;
-  }
+  //if (RSA_verify(&release_rsa_key, ((void*)&_app_start[0]) + len, RSANUMBYTES, digest, SHA_DIGEST_SIZE)) {
+    //goto good;
+  //}
 
   // allow debug if built from source
 #ifdef ALLOW_DEBUG

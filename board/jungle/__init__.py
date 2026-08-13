@@ -4,7 +4,7 @@ import struct
 from functools import wraps
 
 from panda import Panda, PandaDFU
-from panda.python.constants import McuType
+from panda.python.constants import McuType, compute_version_hash
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 FW_PATH = os.path.join(BASEDIR, "../obj/")
@@ -49,7 +49,8 @@ class PandaJungle(Panda):
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
-    return None, None, None, None, None
+    # Match Panda.spi_connect signature: (context, handle, serial, bootstub)
+    return None, None, None, False
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
@@ -123,13 +124,14 @@ class PandaJungle(Panda):
 
   # ******************* control *******************
 
-  # Returns tuple with health packet version and CAN packet/USB packet version
+  # Returns tuple with health packet version and CAN packet version
   def get_packets_versions(self):
+    # Jungle returns 3 bytes (health, CAN, CAN_HEALTH). Only return health and CAN here.
     dat = self._handle.controlRead(PandaJungle.REQUEST_IN, 0xdd, 0, 0, 3)
     if dat and len(dat) == 3:
       a = struct.unpack("BBB", dat)
-      return (a[0], a[1], a[2])
-    return (-1, -1, -1)
+      return (a[0], a[1])
+    return (-1, -1)
 
   # ******************* jungle stuff *******************
 
@@ -150,6 +152,15 @@ class PandaJungle(Panda):
 
   def set_generated_can(self, enabled):
     self._handle.controlWrite(PandaJungle.REQUEST_OUT, 0xa4, int(enabled), 0, b'')
+
+  # Jungle firmware reports CAN packet versions differently; bypass strict CAN version checks
+  def can_send_many(self, arr, *, fd=False, timeout=None):
+    # Call the underlying Panda implementation to avoid the @ensure_can_packet_version wrapper
+    return Panda.can_send_many.__wrapped__(self, arr, fd=fd, timeout=timeout if timeout is not None else Panda.CAN_SEND_TIMEOUT_MS)
+
+  def can_recv(self):
+    # Bypass CAN packet version enforcement for Jungle devices
+    return Panda.can_recv.__wrapped__(self)
 
   # ******************* serial *******************
 

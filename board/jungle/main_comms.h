@@ -180,16 +180,16 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
         current_board->set_can_mode(CAN_MODE_NORMAL);
       }
       break;
-    // **** 0xdd: get healthpacket and CANPacket version hashes
-    case 0xdd: {
-      uint32_t versions[2] = {JUNGLE_HEALTH_PACKET_VERSION, CAN_PACKET_VERSION_HASH};
-      (void)memcpy(resp, (uint8_t *)versions, sizeof(versions));
-      resp_len = sizeof(versions);
+    // **** 0xdd: get healthpacket and CANPacket versions
+    case 0xdd:
+      resp[0] = JUNGLE_HEALTH_PACKET_VERSION;
+      resp[1] = CAN_PACKET_VERSION;
+      resp[2] = CAN_HEALTH_PACKET_VERSION;
+      resp_len = 3;
       break;
-    }
     // **** 0xde: set can bitrate
     case 0xde:
-      if ((req->param1 < PANDA_CAN_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
+      if ((req->param1 < PANDA_BUS_CNT) && is_speed_valid(req->param2, speeds, sizeof(speeds)/sizeof(speeds[0]))) {
         bus_config[req->param1].can_speed = req->param2;
         bool ret = can_init(CAN_NUM_FROM_BUS_NUM(req->param1));
         UNUSED(ret);
@@ -212,7 +212,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       if (req->param1 == 0xFFFFU) {
         print("Clearing CAN Rx queue\n");
         can_clear(&can_rx_q);
-      } else if (req->param1 < PANDA_CAN_CNT) {
+      } else if (req->param1 < PANDA_BUS_CNT) {
         print("Clearing CAN Tx queue\n");
         can_clear(can_queues[req->param1]);
       } else {
@@ -225,7 +225,7 @@ int comms_control_handler(ControlPacket_t *req, uint8_t *resp) {
       break;
     // **** 0xf5: Set CAN silent mode
     case 0xf5:
-      can_silent = (req->param1 > 0U);
+      can_silent = (req->param1 > 0U) ? ALL_CAN_SILENT : ALL_CAN_LIVE;
       can_init_all();
       break;
     // **** 0xf7: enable/disable header pin by number

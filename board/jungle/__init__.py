@@ -4,7 +4,7 @@ import struct
 from functools import wraps
 
 from panda import Panda, PandaDFU
-from panda.python.constants import McuType, compute_version_hash
+from panda.python.constants import McuType
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 FW_PATH = os.path.join(BASEDIR, "../obj/")
@@ -34,8 +34,10 @@ class PandaJungle(Panda):
   USB_PIDS = (0xddef, 0xddcf)
 
   HW_TYPE_UNKNOWN = b'\x00'
+  HW_TYPE_V1 = b'\x01'
   HW_TYPE_V2 = b'\x02'
 
+  F4_DEVICES = [HW_TYPE_V1, ]
   H7_DEVICES = [HW_TYPE_V2, ]
 
   HEALTH_PACKET_VERSION = compute_version_hash(os.path.join(BASEDIR, "jungle_health.h"))
@@ -47,8 +49,7 @@ class PandaJungle(Panda):
 
   @classmethod
   def spi_connect(cls, serial, ignore_version=False):
-    # Jungle does not support SPI connection in this build; keep signature compatible
-    return None, None, None, False
+    return None, None, None, None, None
 
   def flash(self, fn=None, code=None, reconnect=True):
     if not fn:
@@ -75,8 +76,16 @@ class PandaJungle(Panda):
 
   def get_mcu_type(self) -> McuType:
     hw_type = self.get_type()
-    if hw_type in PandaJungle.H7_DEVICES:
+    if hw_type in PandaJungle.F4_DEVICES:
+      return McuType.F4
+    elif hw_type in PandaJungle.H7_DEVICES:
       return McuType.H7
+    else:
+      # have to assume F4, see comment in Panda.connect
+      # initially Jungle V1 has HW type: bytearray(b'')
+      if hw_type == b'' or self._assume_f4_mcu:
+        return McuType.F4
+
     raise ValueError(f"unknown HW type: {hw_type}")
 
   def up_to_date(self, fn=None) -> bool:
@@ -114,12 +123,13 @@ class PandaJungle(Panda):
 
   # ******************* control *******************
 
+  # Returns tuple with health packet version and CAN packet/USB packet version
   def get_packets_versions(self):
-    # Return (health_version, can_packet_version)
-    dat = self._handle.controlRead(PandaJungle.REQUEST_IN, 0xdd, 0, 0, 8)
-    if dat and len(dat) == 8:
-      return struct.unpack("<II", dat)
-    return (0, 0)
+    dat = self._handle.controlRead(PandaJungle.REQUEST_IN, 0xdd, 0, 0, 3)
+    if dat and len(dat) == 3:
+      a = struct.unpack("BBB", dat)
+      return (a[0], a[1], a[2])
+    return (-1, -1, -1)
 
   # ******************* jungle stuff *******************
 

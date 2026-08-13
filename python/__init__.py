@@ -111,7 +111,11 @@ def ensure_version(desc, lib_field, panda_field, fn):
     lib_version = getattr(self, lib_field)
     panda_version = getattr(self, panda_field)
     if lib_version != panda_version:
-      raise RuntimeError(f"{desc} packet version mismatch: panda's firmware v{panda_version}, library v{lib_version}. Reflash panda.")
+      # Allow legacy devices that report version 0 (older F4 jungles) to proceed with a warning.
+      if panda_version == 0:
+        pass
+      else:
+        raise RuntimeError(f"{desc} packet version mismatch: panda's firmware v{panda_version}, library v{lib_version}. Reflash panda.")
     return fn(self, *args, **kwargs)
   return wrapper
 ensure_can_packet_version = partial(ensure_version, "CAN", "CAN_PACKET_VERSION", "can_version")
